@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Headers;
+using System.Text.Json;
 
 using HttpClient client = new();
 client.DefaultRequestHeaders.Accept.Clear();
@@ -9,8 +10,14 @@ client.DefaultRequestHeaders.Add("User-Agent", ".NET Foundation Repository Repor
 await ProcessRepoAsync(client);
 static async Task ProcessRepoAsync(HttpClient client)
 {
-    var json = await client.GetStringAsync("https://api.github.com/orgs/dotnet/repos");
-    Console.WriteLine(json);
+    await using Stream stream = await client.GetStreamAsync("https://api.github.com/orgs/dotnet/repos");
+    var repos = await JsonSerializer.DeserializeAsync<List<Repo>>(stream);
+    Console.WriteLine(repos);
+    // below loop says that is repos exists, then iterate through each repo
+    foreach (var repo in repos ?? Enumerable.Empty<Repo>())
+    {
+        Console.WriteLine(repo);
+    }
 }
 
 // JsonSerializer = class used to deserialize JSON into C# objects
